@@ -1,18 +1,46 @@
 <style>
   .lookbook {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
+    max-width: {{ settings.page_width }}px;
+    margin: 0 auto;
+    padding: 48px 0;
   }
 
-  .lookbook__banner, .lookbook__carosel {
-    width: 48%;
+  .lookbook__banner {
+    width: 46%;
+    position: relative;
     margin: 0 1%;
   }
-  
-  .lookbook__banner__img {
-      width: 100%;
-      height: auto;
+
+  .lookbook__dot {
+    width: 16px;
+    height: 16px;
+    background: #f9f9f9;
+    position: absolute;
+    z-index: 9;
+    border-radius: 50%;
+    cursor:pointer;
+  }
+
+  .lookbook__carosel {
+    width: 46%;
+  }
+
+  .lookbook__banner img {
+    width: 100%; 
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block; 
+    filter: brightness(0.6)
+    
+  }
+
+  .lookbook__card__img{
+    width: 100%;
+    height: auto;
   }
 
   button.lookbook__banner__button {
@@ -22,47 +50,90 @@
     color: #ffffff;
     font-weight: 600;
     border: 2px solid  black;
+    cursor: pointer;
   }
   
   .lookbook_card__text {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      margin: 8px 0 8px 0;
   }
   
   .lookbook__card__text__title {
       padding: 0;
       margin: 0;
-      margin-bottom: 12px;
-  }
+  } 
 
+  @media (max-width: 767px) {
+    .lookbook {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .lookbook__banner,
+    .lookbook__carosel {
+      width: 80%;
+    }
+    
+    .lookbook__banner {
+        margin-bottom: 16px;
+    }
+  }
 
 /* --------------------custom-slider-------------------- */
 
+  .lookbook .slick-dots {
+    bottom: -35px;
+  }
+
   .lookbook .slick-dots li button:before {
-    font-size: 40px  
+    font-size: 40px;
+  }
+
+  .lookbook .slick-dots li {
+    margin: 0;
+  }
+
+  .lookbook .slick-dots li.slick-active button:before {
+    color: #2d6eff;
+    bottom: -36px;
   }
 </style>
 
 <div class="lookbook">
   <div class="lookbook__banner">
-    <img class="lookbook__banner__img" src="{{ section.settings.lookbook_banner | image_url:width: 600 }}" height="100" width="100" />
+    {% for block in section.blocks %}
+      <span data-slide={{ forloop.index }} style="top:{{ block.settings.vertical_position }}%; left:{{ block.settings.horizontal_position }}%" class="lookbook__dot"></span>
+    {% endfor" %}
+    
+    <picture>
+      <source srcset="{{ section.settings.lookbook_banner | image_url:width: 800 }}" media="(min-resolution: 2dppx)">
+      <source srcset="{{ section.settings.lookbook_banner | image_url:width: 600 }}">
+      <img src="{{ section.settings.lookbook_banner | image_url:width: 600 }}" width="400" height="500" alt="{{ section.settings.lookbook_banner.alt }}">
+    </picture>
   </div>
 
   <div class="lookbook__carosel">
     {% for block in section.blocks %}
       {%- assign lookbook_product = all_products[block.settings.product] -%}
 
-      <div class="lookbook__card">
-        <img class="lookbook__banner__img" src="{{ lookbook_product.featured_image | image_url:width: 600 }}" height="100" width="100" />
+      <div class="lookbook__card-container">
+        <form class="lookbook__card" method="post" action="/cart/add" novalidate="novalidate" data-type="add-to-cart-form">
+          <input type="hidden" name="id" value="{{ lookbook_product.variants.first.id }}" />
+          <input type="hidden" name="product-url" value="{{ lookbook_product.url }}" />
+          <input type="hidden" min="1" type="number" id="quantity" name="quantity" value="1"/>
         
-        <div class="lookbook_card__text">
-          <h4 class="lookbook__card__text__title">{{ lookbook_product.title }}</h4>
-          <label class="lookbook__card__text__money">{{ lookbook_product.price | money }}</label>
+          <img class="lookbook__card__img" src="{{ lookbook_product.featured_image | image_url:width: 600 }}" height="100" width="100" />
+          
+          <div class="lookbook_card__text">
+            <h4 class="lookbook__card__text__title">{{ lookbook_product.title }}</h4>
+            <label class="lookbook__card__text__money">{{ lookbook_product.price | money }}</label>
+          </div>
+          
+          <button id="lookbook-atc" value="Add to cart" class="lookbook__banner__button">Add to Cart</button>
+          </form>
         </div>
-        
-        <button class="lookbook__banner__button">Add to Cart</button>
-      </div>
     {% endfor %}
   </div>
 </div>
@@ -75,6 +146,31 @@
       infinite: true,
       slidesToShow: 1,
     })
+
+    $('.lookbook__dot').each(function(index, el) {
+      $(el).on('click', function() {
+        $('.lookbook__carosel').slick('slickGoTo', $(el).data('slide') - 1);
+      });
+    });
+
+    $('#lookbook-atc').on("click", function(e){
+      e.preventDefault();
+
+      let variant = $(this).siblings('input[name="id"]').val();
+      let items = [{ quantity: 1, id: variant }];
+  
+      $.ajax({
+         type: "POST",
+         url: '/cart/add.json',
+         data: { items: items },
+         success: function(data) {
+            console.log('success');
+         },
+         dataType: 'application/json'
+      });
+    })
+    
+
   })
 </script>
 
@@ -94,6 +190,11 @@
         "type": "Bulletpoint",
         "name": "Product",
         "settings": [
+          {
+            "id": "enable_dot",
+            "type": "checkbox",
+            "label": "Enable Dot"
+          },
           {
             "id": "vertical_position",
             "type": "range",
