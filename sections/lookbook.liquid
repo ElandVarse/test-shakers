@@ -5,12 +5,14 @@
     {% for block in section.blocks %}
       <span data-slide={{ forloop.index }} style="top:{{ block.settings.vertical_position }}%; left:{{ block.settings.horizontal_position }}%" class="lookbook__dot"></span>
     {% endfor" %}
-    
-    <picture>
-      <source srcset="{{ section.settings.lookbook_banner | image_url:width: 800 }}" media="(min-resolution: 2dppx)">
-      <source srcset="{{ section.settings.lookbook_banner | image_url:width: 600 }}">
-      <img src="{{ section.settings.lookbook_banner | image_url:width: 600 }}" width="400" height="500" alt="{{ section.settings.lookbook_banner.alt }}">
-    </picture>
+
+    {% if section.settings.lookbook_banner > 0 %}
+      <picture>
+        <source srcset="{{ section.settings.lookbook_banner | image_url:width: 800 }}" media="(min-resolution: 2dppx)">
+        <source srcset="{{ section.settings.lookbook_banner | image_url:width: 600 }}">
+        <img src="{{ section.settings.lookbook_banner | image_url:width: 600 }}" width="400" height="500" alt="{{ section.settings.lookbook_banner.alt }}">
+      </picture>
+    {% endif %}
   </div>
 
   <div class="lookbook__carosel">
