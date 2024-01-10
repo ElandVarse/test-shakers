@@ -6,7 +6,7 @@
       <span data-slide={{ forloop.index }} style="top:{{ block.settings.vertical_position }}%; left:{{ block.settings.horizontal_position }}%" class="lookbook__dot"></span>
     {% endfor" %}
 
-    {% if section.settings.lookbook_banner > 0 %}
+    {% if section.settings.lookbook_banner != blank %}
       <picture>
         <source srcset="{{ section.settings.lookbook_banner | image_url:width: 800 }}" media="(min-resolution: 2dppx)">
         <source srcset="{{ section.settings.lookbook_banner | image_url:width: 600 }}">
